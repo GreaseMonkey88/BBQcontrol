@@ -19,8 +19,9 @@ const char *SensorName = "BBQcontrol";
 const char *version = "BBQcontrol v1.00";
 
 // Other variables
-volatile long unsigned counter;
-volatile long unsigned lastTime;
+const int servoPin = 2;
+//long unsigned cycleTime = 2000;
+//long unsigned lastTime;
 int incomingByte = 0; // for incoming serial data
 int pos = 90;
 int hysteresis;
@@ -77,72 +78,95 @@ void reconnect()
   }
 }
 
-void callback(char* topic, byte* payload, unsigned int length) {
+void callback(char *topic, byte *payload, unsigned int length)
+{
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
-  for (unsigned int i = 0; i < length; i++) {
+  for (unsigned int i = 0; i < length; i++)
+  {
     Serial.print((char)payload[i]);
   }
   Serial.println();
 
-  String stringTopic = String(topic);
-  if (stringTopic.equals("BBQcontrol/p_step")) {
+  String stringTopic = String(topic); // format topic for evaliation of received parameters below
+
+  // Receive stepsize
+  if (stringTopic.equals("BBQcontrol/p_step"))
+  {
     char helperString[6];
     uint8_t pIdx;
-    for (pIdx = 0; pIdx < 5 && pIdx < length; pIdx++) {
+    for (pIdx = 0; pIdx < 5 && pIdx < length; pIdx++)
+    {
       helperString[pIdx] = payload[pIdx];
     }
     helperString[pIdx] = '\0';
-    if (String(helperString).toInt() > 0) {
+    if (String(helperString).toInt() > 0)
+    {
       stepServo = String(helperString).toInt();
       Serial.print("p_step: ");
       Serial.println(stepServo);
     }
   }
+
   // Receive hysteresis
-  if (stringTopic.equals("BBQcontrol/p_hysteresis")) {
+  if (stringTopic.equals("BBQcontrol/p_hysteresis"))
+  {
     char helperString[6];
     uint8_t pIdx;
-    for (pIdx = 0; pIdx < 5 && pIdx < length; pIdx++) {
+    for (pIdx = 0; pIdx < 5 && pIdx < length; pIdx++)
+    {
       helperString[pIdx] = payload[pIdx];
     }
     helperString[pIdx] = '\0';
-    if (String(helperString).toInt() > 0) {
+    if (String(helperString).toInt() > 0)
+    {
       hysteresis = String(helperString).toInt();
       Serial.print("p_hysteresis: ");
       Serial.println(hysteresis);
     }
   }
 
-  // Evaluate first character received
-  if ((char)payload[0] == '+') {
-    if (lastDir == 0) {
+  // Evaluate first character received for new step and direction
+  if ((char)payload[0] == '+')
+  {
+    if (lastDir == 0)
+    {
       pos = pos + hysteresis;
     }
-    pos = pos + stepServo;
-    myservo.write(pos);
-    client.publish("BBQcontrol/DEVposition", String(pos).c_str(), true);
-    lastDir = 1;
-    Serial.print("Position: ");
-    Serial.print(pos);
-    Serial.print(" - Step: ");
-    Serial.println(stepServo);
+    if (pos + stepServo < 181)  // set endstops
+    {
+      pos = pos + stepServo;
+      myservo.write(pos);
+      delay(100);
+      lastDir = 1;
+      Serial.print("Position: ");
+      Serial.print(pos);
+      Serial.print(" - Step: ");
+      Serial.println(stepServo);
+    }
   }
 
-  if ((char)payload[0] == '-') {
-    if (lastDir == 1) {
+  if ((char)payload[0] == '-')
+  {
+    if (lastDir == 1)
+    {
       pos = pos - hysteresis;
     }
-    pos = pos - stepServo;
-    myservo.write(pos);
-    client.publish("BBQcontrol/DEVposition", String(pos).c_str(), true);
-    lastDir = 0;
-    Serial.print("Position: ");
-    Serial.print(pos);
-    Serial.print(" - Step: ");
-    Serial.println(stepServo);
+    if (pos - stepServo > 1)  // set endstops
+    {
+      pos = pos - stepServo;
+      myservo.write(pos);
+      delay(100);
+      lastDir = 0;
+      Serial.print("Position: ");
+      Serial.print(pos);
+      Serial.print(" - Step: ");
+      Serial.println(stepServo);
+    }
   }
+
+  client.publish("BBQcontrol/DEVposition", String(pos).c_str(), true);
 }
 
 void setup()
@@ -155,12 +179,10 @@ void setup()
   client.setCallback(callback);
   //timeClient.begin();   // activate for NTP
   Serial.println(version);
-
-  myservo.attach(2);
+  myservo.attach(servoPin);
   myservo.write(pos);
-  delay(50);
-  Serial.println(pos);
-  //stepServo = 5;
+  delay(100);
+  client.publish("BBQcontrol/DEVposition", String(pos).c_str(), true);
 }
 
 void loop()
@@ -173,4 +195,8 @@ void loop()
   client.loop();
   //timeClient.update();   // activate for NTP
 
+  /* if (millis() - lastTime >= cycleTime)
+  {
+
+  } */
 }
