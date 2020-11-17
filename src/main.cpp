@@ -1,5 +1,6 @@
-#include <NTPClient.h>
-#include <WiFiUdp.h>
+#include <Arduino.h>
+//#include <NTPClient.h>    // activate for NTP
+//#include <WiFiUdp.h>      // activate for NTP
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <Servo.h>
@@ -14,7 +15,7 @@ const char *mqtt_server = "10.0.0.10";
 const char *mqtt_user = "mark";
 const char *mqtt_pass = "8749";
 const char *SensorName = "BBQcontrol";
-const char *NTPserver = "10.0.0.1";
+//const char *NTPserver = "10.0.0.1";     // activate for NTP
 const char *version = "BBQcontrol v1.00";
 
 // Other variables
@@ -22,13 +23,13 @@ volatile long unsigned counter;
 volatile long unsigned lastTime;
 int incomingByte = 0; // for incoming serial data
 int pos = 90;
-int hyterese = 5;
+int hysteresis;
 int lastDir = 2;
 int stepServo;
 
-// NTP stuff
-WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, NTPserver, 3600, 600000);
+// NTP stuff - activate for NTP
+//WiFiUDP ntpUDP;
+//NTPClient timeClient(ntpUDP, NTPserver, 3600, 600000);
 
 Servo myservo;
 WiFiClient espClient;
@@ -61,6 +62,7 @@ void reconnect()
     if (client.connect(SensorName, mqtt_user, mqtt_pass))
     {
       client.subscribe("BBQcontrol/p_step");
+      client.subscribe("BBQcontrol/p_hysteresis");
       client.subscribe("BBQcontrol/control");
       Serial.println("connected");
     }
@@ -86,44 +88,59 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   String stringTopic = String(topic);
   if (stringTopic.equals("BBQcontrol/p_step")) {
-    char stepServoString[6];
+    char helperString[6];
     uint8_t pIdx;
     for (pIdx = 0; pIdx < 5 && pIdx < length; pIdx++) {
-      stepServoString[pIdx] = payload[pIdx];
+      helperString[pIdx] = payload[pIdx];
     }
-    stepServoString[pIdx] = '\0';
-    
-    if (String(stepServoString).toInt() > 0) {
-      stepServo = String(stepServoString).toInt();
+    helperString[pIdx] = '\0';
+    if (String(helperString).toInt() > 0) {
+      stepServo = String(helperString).toInt();
       Serial.print("p_step: ");
       Serial.println(stepServo);
+    }
+  }
+  // Receive hysteresis
+  if (stringTopic.equals("BBQcontrol/p_hysteresis")) {
+    char helperString[6];
+    uint8_t pIdx;
+    for (pIdx = 0; pIdx < 5 && pIdx < length; pIdx++) {
+      helperString[pIdx] = payload[pIdx];
+    }
+    helperString[pIdx] = '\0';
+    if (String(helperString).toInt() > 0) {
+      hysteresis = String(helperString).toInt();
+      Serial.print("p_hysteresis: ");
+      Serial.println(hysteresis);
     }
   }
 
   // Evaluate first character received
   if ((char)payload[0] == '+') {
     if (lastDir == 0) {
-      pos = pos + hyterese;
+      pos = pos + hysteresis;
     }
     pos = pos + stepServo;
     myservo.write(pos);
     client.publish("BBQcontrol/DEVposition", String(pos).c_str(), true);
     lastDir = 1;
-    Serial.println(pos);
-    Serial.print("Step: ");
+    Serial.print("Position: ");
+    Serial.print(pos);
+    Serial.print(" - Step: ");
     Serial.println(stepServo);
   }
 
   if ((char)payload[0] == '-') {
     if (lastDir == 1) {
-      pos = pos - hyterese;
+      pos = pos - hysteresis;
     }
     pos = pos - stepServo;
     myservo.write(pos);
     client.publish("BBQcontrol/DEVposition", String(pos).c_str(), true);
     lastDir = 0;
-    Serial.println(pos);
-    Serial.print("Step: ");
+    Serial.print("Position: ");
+    Serial.print(pos);
+    Serial.print(" - Step: ");
     Serial.println(stepServo);
   }
 }
@@ -136,14 +153,14 @@ void setup()
   setup_wifi();
   client.setServer(mqtt_server, 1885);
   client.setCallback(callback);
-  timeClient.begin();
+  //timeClient.begin();   // activate for NTP
   Serial.println(version);
 
   myservo.attach(2);
   myservo.write(pos);
   delay(50);
   Serial.println(pos);
-  stepServo = 5;
+  //stepServo = 5;
 }
 
 void loop()
@@ -154,6 +171,6 @@ void loop()
   }
 
   client.loop();
-  timeClient.update();
+  //timeClient.update();   // activate for NTP
 
 }
