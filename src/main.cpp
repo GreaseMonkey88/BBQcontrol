@@ -231,6 +231,7 @@ void callback(char *topic, byte *payload, unsigned int length)
   }
 
   client.publish("BBQcontrol/DEVposition", String(pos).c_str(), true);
+  client.publish("BBQcontrol/DEV_Wifi_RSSI", String(WiFi.RSSI()).c_str(), true);
 }
 
 void setup()
