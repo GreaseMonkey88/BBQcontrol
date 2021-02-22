@@ -22,11 +22,14 @@ const char *version = "BBQcontrol v1.00";
 const int servoPin = 2;
 //long unsigned cycleTime = 2000;
 //long unsigned lastTime;
-int incomingByte = 0; // for incoming serial data
-int pos = 90;
-int hysteresis;
+int incomingByte = 0;    // for incoming serial data
+int pos = 90;            // init position
+int stepServo;           // actual step lengh the servo does
+int hysteresis;          // for reversing general direction
+int stepRelease;         // push a little bit further then back again to release preasure from servo in idle
+int boostTime;           // time [s] for how long the servo should go to max position for short extra heating
+int boostPosition = 180; // postion of servo for maximum
 int lastDir = 2;
-int stepServo;
 
 // NTP stuff - activate for NTP
 //WiFiUDP ntpUDP;
@@ -64,6 +67,8 @@ void reconnect()
     {
       client.subscribe("BBQcontrol/p_step");
       client.subscribe("BBQcontrol/p_hysteresis");
+      client.subscribe("BBQcontrol/p_stepRelease");
+      client.subscribe("BBQcontrol/p_boostTime");
       client.subscribe("BBQcontrol/control");
       Serial.println("connected");
     }
@@ -127,6 +132,42 @@ void callback(char *topic, byte *payload, unsigned int length)
     }
   }
 
+  // Receive stepRelease
+  if (stringTopic.equals("BBQcontrol/p_stepRelease"))
+  {
+    char helperString[6];
+    uint8_t pIdx;
+    for (pIdx = 0; pIdx < 5 && pIdx < length; pIdx++)
+    {
+      helperString[pIdx] = payload[pIdx];
+    }
+    helperString[pIdx] = '\0';
+    if (String(helperString).toInt() > 0)
+    {
+      stepRelease = String(helperString).toInt();
+      Serial.print("p_stepRelease: ");
+      Serial.println(stepRelease);
+    }
+  }
+
+  // Receive boostTime
+  if (stringTopic.equals("BBQcontrol/p_boostTime"))
+  {
+    char helperString[6];
+    uint8_t pIdx;
+    for (pIdx = 0; pIdx < 5 && pIdx < length; pIdx++)
+    {
+      helperString[pIdx] = payload[pIdx];
+    }
+    helperString[pIdx] = '\0';
+    if (String(helperString).toInt() > 0)
+    {
+      boostTime = String(helperString).toInt();
+      Serial.print("p_boostTime: ");
+      Serial.println(boostTime);
+    }
+  }
+
   // Evaluate first character received for new step and direction
   if ((char)payload[0] == '+')
   {
@@ -134,9 +175,11 @@ void callback(char *topic, byte *payload, unsigned int length)
     {
       pos = pos + hysteresis;
     }
-    if (pos + stepServo < 181)  // set endstops
+    if (pos + stepServo < 181) // set endstops
     {
       pos = pos + stepServo;
+      myservo.write(pos + stepRelease);
+      delay(500);
       myservo.write(pos);
       delay(100);
       lastDir = 1;
@@ -153,9 +196,11 @@ void callback(char *topic, byte *payload, unsigned int length)
     {
       pos = pos - hysteresis;
     }
-    if (pos - stepServo > 1)  // set endstops
+    if (pos - stepServo > 1) // set endstops
     {
       pos = pos - stepServo;
+      myservo.write(pos - stepRelease);
+      delay(500);
       myservo.write(pos);
       delay(100);
       lastDir = 0;
@@ -164,6 +209,25 @@ void callback(char *topic, byte *payload, unsigned int length)
       Serial.print(" - Step: ");
       Serial.println(stepServo);
     }
+  }
+
+  // Boosting
+  if ((char)payload[0] == 'B')
+  {
+    myservo.write(boostPosition);
+    delay(500);
+    client.publish("BBQcontrol/DEVposition", String("Boosting").c_str(), true);
+    myservo.write(boostPosition - stepRelease);
+    delay(boostTime * 1000);
+    myservo.write(pos - stepRelease); // "-" if boost postion is the largest possible value, e.g. 180°
+    delay(500);
+    myservo.write(pos);
+    delay(100);
+    lastDir = 0;
+    //Serial.print("Position: ");
+    //Serial.print(pos);
+    //Serial.print(" - Step: ");
+    //Serial.println(stepServo);
   }
 
   client.publish("BBQcontrol/DEVposition", String(pos).c_str(), true);
