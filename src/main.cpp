@@ -30,6 +30,7 @@ int stepRelease;         // push a little bit further then back again to release
 int boostTime;           // time [s] for how long the servo should go to max position for short extra heating
 int boostPosition = 180; // postion of servo for maximum
 int lastDir = 2;
+long unsigned startTime;
 
 // NTP stuff - activate for NTP
 //WiFiUDP ntpUDP;
@@ -196,7 +197,7 @@ void callback(char *topic, byte *payload, unsigned int length)
     {
       pos = pos - hysteresis;
     }
-    if (pos - stepServo > 1) // set endstops
+    if (pos - stepServo > 0) // set endstops
     {
       pos = pos - stepServo;
       myservo.write(pos - stepRelease);
@@ -232,6 +233,13 @@ void callback(char *topic, byte *payload, unsigned int length)
 
   client.publish("BBQcontrol/DEVposition", String(pos).c_str(), true);
   client.publish("BBQcontrol/DEV_Wifi_RSSI", String(WiFi.RSSI()).c_str(), true);
+}
+
+void booster()
+{
+
+startTime = millis();
+
 }
 
 void setup()
