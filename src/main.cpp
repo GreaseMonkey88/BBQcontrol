@@ -1,11 +1,7 @@
 #include <Arduino.h>
-//#include <NTPClient.h>    // activate for NTP
-//#include <WiFiUdp.h>      // activate for NTP
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <Servo.h>
-
-#define DEVmessages 1 // change 1 to 0 if you don´t want MQTT DEV messages
 
 // Wifi and mqtt network settings
 const char *ssid = "the dude-net";
@@ -15,26 +11,22 @@ const char *mqtt_server = "10.0.0.10";
 const char *mqtt_user = "mark";
 const char *mqtt_pass = "8749";
 const char *SensorName = "BBQcontrol";
-//const char *NTPserver = "10.0.0.1";     // activate for NTP
 const char *version = "BBQcontrol v1.00";
 
 // Other variables
 const int servoPin = 2;
-//long unsigned cycleTime = 2000;
-//long unsigned lastTime;
-int incomingByte = 0;    // for incoming serial data
-int pos = 90;            // init position
-int stepServo;           // actual step lengh the servo does
-int hysteresis;          // for reversing general direction
-int stepRelease;         // push a little bit further then back again to release preasure from servo in idle
-int boostTime;           // time [s] for how long the servo should go to max position for short extra heating
+int incomingByte = 0;  // for incoming serial data
+int pos = 90;          // init position
+int posInvert;         //
+int stepServo;         // actual step lengh the servo does
+int hysteresis;        // for reversing general direction
+int stepRelease;       // push a little bit further then back again to release preasure from servo in idle
+int boostTime;         // time [s] for how long the servo should go to max position for short extra heating
 int boostPosition = 1; // postion of servo for maximum
 int lastDir = 2;
+char lastDir2;
 long unsigned startTime;
 
-// NTP stuff - activate for NTP
-//WiFiUDP ntpUDP;
-//NTPClient timeClient(ntpUDP, NTPserver, 3600, 600000);
 
 Servo myservo;
 WiFiClient espClient;
@@ -184,6 +176,7 @@ void callback(char *topic, byte *payload, unsigned int length)
       myservo.write(pos);
       delay(100);
       lastDir = 1;
+      lastDir2 = '-';
       Serial.print("Position: ");
       Serial.print(pos);
       Serial.print(" - Step: ");
@@ -205,6 +198,7 @@ void callback(char *topic, byte *payload, unsigned int length)
       myservo.write(pos);
       delay(100);
       lastDir = 0;
+      lastDir2 = '+';
       Serial.print("Position: ");
       Serial.print(pos);
       Serial.print(" - Step: ");
@@ -217,30 +211,27 @@ void callback(char *topic, byte *payload, unsigned int length)
   {
     myservo.write(boostPosition);
     delay(500);
-    client.publish("BBQcontrol/DEVposition", String("Boosting").c_str(), true);
+    client.publish("BBQcontrol/position", String("Boosting").c_str(), true);
     myservo.write(boostPosition + stepRelease);
+    client.publish("BBQcontrol/DEVposition", String(pos).c_str(), true);
     delay(boostTime * 1000);
     myservo.write(pos + stepRelease); // "-" if boost postion is the largest possible value, e.g. 180°
     delay(500);
     myservo.write(pos);
     delay(100);
-    lastDir = 0;
-    //Serial.print("Position: ");
-    //Serial.print(pos);
-    //Serial.print(" - Step: ");
-    //Serial.println(stepServo);
+    lastDir = 1;
+    lastDir2 = '-';
   }
 
+  // Send data
+  posInvert = map(pos, 1, 180, 180, 1);
+  posInvert = posInvert - 2;
+  client.publish("BBQcontrol/position", String(posInvert).c_str(), true);
+  client.publish("BBQcontrol/lastDirection", String(lastDir2).c_str(), true);
   client.publish("BBQcontrol/DEVposition", String(pos).c_str(), true);
   client.publish("BBQcontrol/DEV_Wifi_RSSI", String(WiFi.RSSI()).c_str(), true);
 }
 
-void booster()
-{
-
-startTime = millis();
-
-}
 
 void setup()
 {
@@ -250,7 +241,6 @@ void setup()
   setup_wifi();
   client.setServer(mqtt_server, 1885);
   client.setCallback(callback);
-  //timeClient.begin();   // activate for NTP
   Serial.println(version);
   myservo.attach(servoPin);
   myservo.write(pos);
@@ -266,10 +256,4 @@ void loop()
   }
 
   client.loop();
-  //timeClient.update();   // activate for NTP
-
-  /* if (millis() - lastTime >= cycleTime)
-  {
-
-  } */
 }
