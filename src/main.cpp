@@ -28,7 +28,7 @@ int stepServo;           // actual step lengh the servo does
 int hysteresis;          // for reversing general direction
 int stepRelease;         // push a little bit further then back again to release preasure from servo in idle
 int boostTime;           // time [s] for how long the servo should go to max position for short extra heating
-int boostPosition = 180; // postion of servo for maximum
+int boostPosition = 1; // postion of servo for maximum
 int lastDir = 2;
 long unsigned startTime;
 
@@ -170,7 +170,7 @@ void callback(char *topic, byte *payload, unsigned int length)
   }
 
   // Evaluate first character received for new step and direction
-  if ((char)payload[0] == '+')
+  if ((char)payload[0] == '-')
   {
     if (lastDir == 0)
     {
@@ -191,7 +191,7 @@ void callback(char *topic, byte *payload, unsigned int length)
     }
   }
 
-  if ((char)payload[0] == '-')
+  if ((char)payload[0] == '+')
   {
     if (lastDir == 1)
     {
@@ -218,9 +218,9 @@ void callback(char *topic, byte *payload, unsigned int length)
     myservo.write(boostPosition);
     delay(500);
     client.publish("BBQcontrol/DEVposition", String("Boosting").c_str(), true);
-    myservo.write(boostPosition - stepRelease);
+    myservo.write(boostPosition + stepRelease);
     delay(boostTime * 1000);
-    myservo.write(pos - stepRelease); // "-" if boost postion is the largest possible value, e.g. 180°
+    myservo.write(pos + stepRelease); // "-" if boost postion is the largest possible value, e.g. 180°
     delay(500);
     myservo.write(pos);
     delay(100);
