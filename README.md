@@ -5,6 +5,12 @@ Mechanical controller with 3D-printed parts to control your BBQ over WiFi. The d
 
 <img src="Doc/bbq.jpeg" width="400"> <img src="Doc/internals.jpeg" width="400">
 
+### Features
+- Connection over WiFi, communication over MQTT. I use [IObroker](https://www.iobroker.net) for web-based control and visualisation.
+- most parameters can be changed live via MQTT like the step size and other
+- time adjustable boost function
+- compensation for knob-play
+
 ### BOM
 - ESP8266 or compatible, I use a Wemos D1 mini clone. There´s a slot in the case for the Wemos D1 mini.
 - DC-DC buck converter LM2596 [AliExpress link](https://www.aliexpress.com/item/32792186556.html?spm=a2g0s.9042311.0.0.27424c4dV3YrsG)
