@@ -4,13 +4,13 @@
 #include <Servo.h>
 
 // Wifi and mqtt network settings
-const char *ssid = "the dude-net";
-const char *password = "iR3DNw8ZFk-t9e3ixVJjhAE-2d9374H9sw5-Sv99fC645C2-6G4359L463tY";
-const char *HostName = "ESP8266-BBQ"; // Edit the hostname which will be shown in your LAN
-const char *mqtt_server = "10.0.0.10";
+const char *ssid = "your wifi";
+const char *password = "wifi pass";
+const char *HostName = "ESP8266-BBQ";  // Edit the hostname which will be shown in your LAN
+const char *mqtt_server = "10.0.0.10"; // MQTT server IP address in your network
 const int mqttPort = 1885;
-const char *mqtt_user = "mark";
-const char *mqtt_pass = "8749";
+const char *mqtt_user = "user";
+const char *mqtt_pass = "pass";
 const char *SensorName = "BBQcontrol";
 const char *version = "BBQcontrol v1.00";
 
