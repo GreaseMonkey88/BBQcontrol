@@ -6,7 +6,7 @@ Mechanical controller with 3D-printed parts to control your BBQ over WiFi. The d
 <img src="Doc/bbq.jpeg" width="400"> <img src="Doc/internals.jpeg" width="400">
 
 ### Features
-- Connection over WiFi, communication over MQTT. I use [IObroker](https://www.iobroker.net) for web-based control and visualisation.
+- Connection over WiFi, communication over MQTT. I use [IoBroker](https://www.iobroker.net) for web-based control and visualisation.
 - most parameters can be changed live via MQTT like the step size and other
 - time adjustable boost function
 - compensation for knob-play
