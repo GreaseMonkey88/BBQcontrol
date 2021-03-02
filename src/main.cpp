@@ -20,7 +20,7 @@ int incomingByte = 0;  // for incoming serial data
 int pos = 90;          // init position
 int posInvert;         // For correct display of position value in smart home or web view
 int stepServo;         // actual step lengh the servo does
-int hysteresis;        // compensate play of the valve when reversing direction
+int hysteresis;        // compensate knob backlash of the valve when reversing direction
 int stepRelease;       // push a little bit further then back again to release preasure from servo in idle
 int boostTime;         // time [s] for how long the servo should go to max position for short extra heating
 int boostPosition = 1; // postion of servo for maximum
