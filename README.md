@@ -16,3 +16,8 @@ Mechanical controller with 3D-printed parts to control your BBQ over WiFi. The d
 
 ### Power supply
 I use a battery from my power drill, 18V 2.5Ah, which lasts probably more than 2 days.  If you have the same type of battery you can download 3D-printable adapter [here on Thingiverse](https://www.thingiverse.com/thing:4244545)
+
+### Designing gears for your own BBQ
+If you use AutoDesk Fusion 360, you can use the built-in gear-generator to design a custom knob which fits your BBQ. Below are the parameters I used for the gears:
+
+<img src="Doc/GearGenerator.jpg" width="350">
