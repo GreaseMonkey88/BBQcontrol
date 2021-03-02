@@ -3,7 +3,7 @@
 
 Mechanical controller with 3D-printed parts to control your BBQ over WiFi. The device uses a ESP8266, a servo and a buck converter for powering the device. The 3D-printed knob fits on a Weber Spirit E320 from 2014. Device control over MQTT.
 
-<img src="Doc/bbq.jpeg" width="400">
+<img src="Doc/bbq.jpeg" width="400"> <img src="Doc/internals.jpeg" width="400">
 
 ### BOM
 - ESP8266 or compatible, I use a Wemos D1 mini clone. There´s a slot in the case for the Wemos D1 mini.
@@ -12,6 +12,7 @@ Mechanical controller with 3D-printed parts to control your BBQ over WiFi. The d
 - Servo DS3218 control angle 270° [Amazon link](https://www.amazon.de/gp/product/B07Q65JY1K/ref=ppx_yo_dt_b_asin_title_o04_s00?ie=UTF8&psc=1)
 - 3D-printed parts, download from Thingiverse [here](https://www.thingiverse.com/thing:4780922)
 - 4x neodyme magnets 10x3mm
+- 10x 2x10mm screws for mounting servo, buck converter and bottom cover
 
 
 ### Power supply
