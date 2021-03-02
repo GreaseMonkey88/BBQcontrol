@@ -8,6 +8,7 @@ const char *ssid = "the dude-net";
 const char *password = "iR3DNw8ZFk-t9e3ixVJjhAE-2d9374H9sw5-Sv99fC645C2-6G4359L463tY";
 const char *HostName = "ESP8266-BBQ"; // Edit the hostname which will be shown in your LAN
 const char *mqtt_server = "10.0.0.10";
+const int mqttPort = 1885;
 const char *mqtt_user = "mark";
 const char *mqtt_pass = "8749";
 const char *SensorName = "BBQcontrol";
@@ -17,17 +18,16 @@ const char *version = "BBQcontrol v1.00";
 const int servoPin = 2;
 int incomingByte = 0;  // for incoming serial data
 int pos = 90;          // init position
-int posInvert;         //
+int posInvert;         // For correct display of position value in smart home or web view
 int stepServo;         // actual step lengh the servo does
-int hysteresis;        // for reversing general direction
+int hysteresis;        // compensate play of the valve when reversing direction
 int stepRelease;       // push a little bit further then back again to release preasure from servo in idle
 int boostTime;         // time [s] for how long the servo should go to max position for short extra heating
 int boostPosition = 1; // postion of servo for maximum
 int lastDir = 2;
 char lastDir2;
-long unsigned startTime;
 
-
+// Definition of instances
 Servo myservo;
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -212,19 +212,19 @@ void callback(char *topic, byte *payload, unsigned int length)
     myservo.write(boostPosition);
     delay(500);
     client.publish("BBQcontrol/position", String("Boosting").c_str(), true);
-    myservo.write(boostPosition + stepRelease);
+    myservo.write(boostPosition + stepRelease); // "-" if boost postion is the largest possible value, e.g. 180°
     client.publish("BBQcontrol/DEVposition", String(pos).c_str(), true);
     delay(boostTime * 1000);
     myservo.write(pos + stepRelease); // "-" if boost postion is the largest possible value, e.g. 180°
     delay(500);
     myservo.write(pos);
     delay(100);
-    lastDir = 1;
-    lastDir2 = '-';
+    lastDir = 1;    // "0" if boost postion is the largest possible value, e.g. 180°
+    lastDir2 = '-'; // "+" if boost postion is the largest possible value, e.g. 180°
   }
 
   // Send data
-  posInvert = map(pos, 1, 180, 180, 1);
+  posInvert = map(pos, 1, 180, 180, 1); // invert for smart home or web display
   posInvert = posInvert - 2;
   client.publish("BBQcontrol/position", String(posInvert).c_str(), true);
   client.publish("BBQcontrol/lastDirection", String(lastDir2).c_str(), true);
@@ -232,20 +232,20 @@ void callback(char *topic, byte *payload, unsigned int length)
   client.publish("BBQcontrol/DEV_Wifi_RSSI", String(WiFi.RSSI()).c_str(), true);
 }
 
-
 void setup()
 {
   Serial.begin(9600);
   Serial.println(" ");
   Serial.println("Starting up...");
   setup_wifi();
-  client.setServer(mqtt_server, 1885);
+  client.setServer(mqtt_server, mqttPort);
   client.setCallback(callback);
   Serial.println(version);
   myservo.attach(servoPin);
   myservo.write(pos);
   delay(100);
   client.publish("BBQcontrol/DEVposition", String(pos).c_str(), true);
+  client.publish("BBQcontrol/position", String(pos).c_str(), true);
 }
 
 void loop()
