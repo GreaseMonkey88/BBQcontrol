@@ -9,7 +9,7 @@ Mechanical controller with 3D-printed parts to control your BBQ over WiFi. The d
 - ESP8266 or compatible, I use a Wemos D1 mini clone. There´s a slot in the case for the Wemos D1 mini.
 - DC-DC buck converter LM2596 [AliExpress link](https://www.aliexpress.com/item/32792186556.html?spm=a2g0s.9042311.0.0.27424c4dV3YrsG)
 - XT30 connector [AliExpress link](https://www.aliexpress.com/item/32773333544.html?spm=a2g0s.9042311.0.0.27424c4dV3YrsG)
-- Servo DS3218 control angle 270° [Amazon link](https://www.amazon.de/gp/product/B07Q65JY1K/ref=ppx_yo_dt_b_asin_title_o04_s00?ie=UTF8&psc=1)
+- Servo DS3218 control angle 270° [Amazon link](https://www.amazon.de/gp/product/B07Q65JY1K/ref=ppx_yo_dt_b_asin_title_o04_s00?ie=UTF8&psc=1) I shortened the control arm to fit the small gear.
 - 3D-printed parts, download from Thingiverse [here](https://www.thingiverse.com/thing:4780922)
 - 4x neodyme magnets 10x3mm
 - 10x 2x10mm screws for mounting servo, buck converter and bottom cover
